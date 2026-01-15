@@ -72,6 +72,7 @@ export default class BilibiliSource extends BaseSource {
                     }
                 }
             }
+			this.error_msg = "未找到对应的番剧视频信息！";
 		} else {
 			this.error_msg = "不支持的B站视频网址，仅支持普通视频(av,bv)、剧集视频(ep)";
 		}
