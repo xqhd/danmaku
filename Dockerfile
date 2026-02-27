@@ -1,15 +1,22 @@
-FROM node:16.18.0-alpine
-ENV TZ Asia/Shanghai
-
-RUN apk add tzdata sqlite sqlite-dev && cp /usr/share/zoneinfo/${TZ} /etc/localtime \
-    && echo ${TZ} > /etc/timezone \
-    && apk del tzdata
-
-LABEL fly_launch_runtime="nodejs"
+FROM node:20-bookworm-slim AS deps
 WORKDIR /app
-COPY ./package.json /app
-RUN npm install --production && npm prune --production
-COPY . /app
-ENV NODE_ENV production
 
-CMD [ "npm", "run", "start" ]
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+
+FROM node:20-bookworm-slim AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=8080
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+RUN mkdir -p /app/db && chown -R node:node /app
+
+USER node
+
+EXPOSE 8080
+
+CMD ["node", "./bin/www"]
